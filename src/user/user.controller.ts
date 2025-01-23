@@ -1,9 +1,10 @@
-import { Body, Controller, Post, Query, Get, Inject, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Post, Query, Get, Inject, UnauthorizedException, SetMetadata } from '@nestjs/common';
 import { UserService } from './user.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { RequireLogin, RequirePermission, UserInfo } from 'src/aop/custom.decorator';
 
 @Controller('user')
 export class UserController {
@@ -99,5 +100,18 @@ export class UserController {
     } catch (error) {
       throw new UnauthorizedException('refresh token无效');
     }
+  }
+
+  @Get('aaa')
+  aaa() {
+    return 'aaa'
+  }
+
+  @Get('bbb')
+  @RequirePermission('ddd')
+  @RequireLogin(true)
+  bbb(@UserInfo('username') username: string) {
+    
+    return username;
   }
 }

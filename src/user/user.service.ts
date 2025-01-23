@@ -8,6 +8,9 @@ import { md5 } from 'src/utils';
 import { EmailService } from 'src/email/email.service';
 import { Role } from './entities/role.entity';
 import { Permission } from './entities/permission.entity';
+import { LoginUserDto } from './dto/login-user.dto';
+import { LoginUserVo } from './vo/login-user.vo';
+import { throws } from 'assert';
 
 @Injectable()
 export class UserService {
@@ -28,6 +31,49 @@ export class UserService {
   private roleRepository: Repository<Role>;
 
   @InjectRepository(Permission)
+  private permissionRepository: Repository<Permission>;
+
+  async initData() {
+    const user1 = new User();
+    user1.username = '白敏';
+    user1.password = md5('123456');
+    user1.email = 'baimin_job@163.com';
+    user1.is_admin = true;
+    user1.nick_name = '小白';
+    user1.phone_number = '13233323333';
+    user1.create_time = Date.now().toString();
+
+    const user2 = new User();
+    user2.username = '系统管理员';
+    user2.password = md5('123456');
+    user2.email = 'system@yy.com';
+    user2.nick_name = '管理员';
+    user2.create_time = Date.now().toString();
+
+    const role1 = new Role();
+    role1.name = '管理员';
+
+    const role2 = new Role();
+    role2.name = '普通用户';
+
+    const permission1 = new Permission();
+    permission1.code = 'ccc';
+    permission1.description = '访问 ccc 接口';
+
+    const permission2 = new Permission();
+    permission2.code = 'ddd';
+    permission2.description = '访问 ddd 接口';
+
+    user1.roles = [role1];
+    user2.roles = [role2];
+
+    role1.permissions = [permission1, permission2];
+    role2.permissions = [permission1];
+
+    await this.permissionRepository.save([permission1, permission2]);
+    await this.roleRepository.save([role1, role2]);
+    await this.userRepository.save([user1, user2]);
+  }
 
   async register(registerUser: RegisterUserDto) {
     const captcha = await this.redisService.get(`register_${registerUser.email}`);
@@ -54,6 +100,7 @@ export class UserService {
     newUser.password = md5(registerUser.password);
     newUser.email = registerUser.email;
     newUser.nick_name = registerUser.nick_name;
+    newUser.create_time = Date.now().toString();
 
     try {
       await this.userRepository.save(newUser);
@@ -80,5 +127,68 @@ export class UserService {
     } catch (error) {
       console.log(error);
     }
+  }
+
+  async login(loginUser: LoginUserDto, isAdmin: boolean) {
+    const user = await this.userRepository.findOne({
+      where: {
+        username: loginUser.username,
+      },
+      relations: ['roles', 'roles.permissions'],
+    });
+
+    if (!user) {
+      throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
+    }
+    if (md5(loginUser.password) !== user.password) {
+      throw new HttpException('密码错误', HttpStatus.BAD_REQUEST);
+    }
+
+    const vo = new LoginUserVo();
+    vo.userInfo = {
+      id: user.id,
+      username: user.username,
+      nick_name: user.nick_name,
+      email: user.email,
+      head_pic: user.head_pic,
+      phone_number: user.phone_number,
+      is_frozen: user.is_frozen,
+      is_admin: user.is_admin,
+      create_time: Number(user.create_time),
+      roles: user.roles.map((role) => role.name),
+      permissions: user.roles.reduce((arr, item) => {
+        item.permissions.forEach((permission) => {
+          if (arr.indexOf(permission.code) === -1) {
+            arr.push(permission);
+          }
+        });
+        return arr;
+      }, []),
+    };
+
+    return vo;
+  }
+
+  async findUserById(id: number, isAdmin: boolean) {
+    const user = await this.userRepository.findOne({
+      where: {
+        id: id
+      },
+      relations: ['roles', 'roles.permissions'],
+    });
+    return {
+      id: user.id,
+      username: user.username,
+      is_admin: user.is_admin,
+      roles: user.roles.map((item) => item.name),
+      permissions: user.roles.reduce((arr, item) => {
+        item.permissions.forEach((permission) => {
+          if (arr.indexOf(permission) === -1) {
+            arr.push(permission);
+          }
+        });
+        return arr;
+      }, []),
+    };
   }
 }

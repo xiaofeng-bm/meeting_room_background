@@ -1,4 +1,11 @@
-import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Role } from './role.entity';
 
 @Entity({
@@ -58,19 +65,20 @@ export class User {
   })
   is_admin: boolean;
 
-  @CreateDateColumn({
+  @Column('bigint', {
     comment: '创建时间',
   })
-  create_time: Date;
+  create_time: string;
 
-  @CreateDateColumn({
+  @Column('bigint', {
     comment: '更新时间',
+    nullable: true
   })
-  update_time: Date;
+  update_time: number;
 
   @ManyToMany(() => Role)
   @JoinTable({
-    name: 'user_roles'
+    name: 'user_roles',
   })
   roles: Role[];
 }

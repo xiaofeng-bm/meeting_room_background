@@ -10,9 +10,21 @@ import { Permission } from './user/entities/permission.entity';
 import { RedisModule } from './redis/redis.module';
 import { EmailModule } from './email/email.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
+    JwtModule.registerAsync({
+      global: true,
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get('jwt_secret'),
+        signOptions: {
+          expiresIn: '30m',
+        },
+      }),
+      inject: [ConfigService],
+    }),
+    // mysql 配置
     TypeOrmModule.forRootAsync({
       useFactory(configService: ConfigService) {
         return {

@@ -10,11 +10,13 @@ import { Observable } from 'rxjs';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { Permission } from 'src/user/entities/permission.entity';
+import { UnLoginException } from './unlogin.filter';
 
 // 定义JWT用户数据接口
 interface JwtUserData {
   userId: number;
   username: string;
+  email: string;
   roles: string[];
   permissions: Permission[];
 }
@@ -67,13 +69,14 @@ export class LoginGuard implements CanActivate {
       request.user = {
         userId: data.userId,
         username: data.username,
+        email: data.email,
         roles: data.roles,
         permissions: data.permissions,
       };
       return true;
     } catch (error) {
       // 如果token验证失败，则抛出token失效异常
-      throw new UnauthorizedException('token 失效，请重新登录');
+      throw new UnLoginException('token 失效，请重新登录');
     }
   }
 }

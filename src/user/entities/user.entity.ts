@@ -18,6 +18,7 @@ export class User {
   @Column({
     length: 50,
     comment: '用户名',
+    unique: true // 唯一索引
   })
   username: string;
 

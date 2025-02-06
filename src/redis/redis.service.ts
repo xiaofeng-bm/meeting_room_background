@@ -7,7 +7,6 @@ import { RedisClientType } from 'redis';
  */
 @Injectable()
 export class RedisService {
-  
   /**
    * Redis客户端属性，用于执行Redis命令
    * 通过@Inject('REDIS_CLIENT')装饰器注入，确保在模块中正确配置了Redis客户端
@@ -34,8 +33,12 @@ export class RedisService {
     await this.redisClient.set(key, value);
 
     // 如果传入了ttl参数，则为键设置过期时间
-    if(ttl) {
+    if (ttl) {
       await this.redisClient.expire(key, ttl);
     }
+  }
+
+  async del(key: string) {
+    await this.redisClient.del(key);
   }
 }

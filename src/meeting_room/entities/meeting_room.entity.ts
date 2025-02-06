@@ -9,7 +9,8 @@ export class MeetingRoom {
 
   @Column({
     length: 50,
-    comment: '会议室名称'
+    comment: '会议室名称',
+    unique: true
   })
   name: string;
 

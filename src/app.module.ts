@@ -16,6 +16,13 @@ import { LoginGuard } from './aop/login.guard';
 import { PermissionGuard } from './aop/permission.guard';
 import { MeetingRoomModule } from './meeting_room/meeting_room.module';
 import { MeetingRoom } from './meeting_room/entities/meeting_room.entity';
+import { BookingModule } from './booking/booking.module';
+import { Booking } from './booking/entities/booking.entity';
+import { StatisticModule } from './statistic/statistic.module';
+import { WinstonModule, utilities, WinstonLogger, WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import * as winston from 'winston';
+import { CustomTypeOrmLogger } from './CustomTypeOrmLogger';
+import 'winston-daily-rotate-file';
 
 @Module({
   imports: [
@@ -31,7 +38,7 @@ import { MeetingRoom } from './meeting_room/entities/meeting_room.entity';
     }),
     // mysql 配置
     TypeOrmModule.forRootAsync({
-      useFactory(configService: ConfigService) {
+      useFactory(configService: ConfigService, logger: WinstonLogger) {
         return {
           type: 'mysql',
           host: configService.get('mysql_host'),
@@ -41,21 +48,46 @@ import { MeetingRoom } from './meeting_room/entities/meeting_room.entity';
           database: configService.get('mysql_database'),
           synchronize: true,
           logging: true,
-          entities: [User, Role, Permission, MeetingRoom],
+          logger: new CustomTypeOrmLogger(logger),
+          entities: [User, Role, Permission, MeetingRoom, Booking],
           poolSize: 10,
           connectorPackage: 'mysql2',
         };
       },
-      inject: [ConfigService],
+      inject: [ConfigService, WINSTON_MODULE_NEST_PROVIDER],
     }),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['src/.env'],
     }),
+
+    WinstonModule.forRootAsync({
+      useFactory: () => ({
+        level: 'debug',
+        transports: [
+          // new winston.transports.File({
+          //   filename: `${process.cwd()}/log`,
+          // }),
+          new winston.transports.DailyRotateFile({
+            level: 'debug',
+            dirname: 'daily-log',
+            filename: 'log=%DATE%.log',
+            datePattern: 'YYYY-MM-DD',
+            maxSize: '10K'
+          }),
+          new winston.transports.Console({
+            format: winston.format.combine(winston.format.timestamp(), utilities.format.nestLike()),
+          }),
+        ],
+      }),
+    }),
+
     UserModule,
     RedisModule,
     EmailModule,
     MeetingRoomModule,
+    BookingModule,
+    StatisticModule,
   ],
   controllers: [AppController],
   providers: [

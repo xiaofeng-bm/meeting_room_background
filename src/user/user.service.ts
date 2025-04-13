@@ -109,8 +109,7 @@ export class UserService {
       return '注册成功';
     } catch (e) {
       this.logger.error(e);
-
-      return '注册失败';
+      throw new HttpException('注册失败', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

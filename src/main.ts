@@ -8,6 +8,7 @@ import { UnloginFilter } from './aop/unlogin.filter';
 import { CustomExceptionFilter } from './aop/custom-exception.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -39,6 +40,9 @@ async function bootstrap() {
   SwaggerModule.setup('api-docs', app, document);
 
   const configService = app.get(ConfigService);
+
+
+  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER))
   await app.listen(configService.get('nestjs_port'));
 }
 bootstrap();

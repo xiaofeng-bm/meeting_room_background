@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 import { MeetingRoom } from './entities/meeting_room.entity';
 import { Like, Repository } from 'typeorm';
 import { CreateMeetingRoomDto } from './dto/create-meeting-room.dto';
